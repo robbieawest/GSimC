@@ -20,10 +20,10 @@ layout(std430, binding = 3) buffer center_masses_n_buffer {
 
 shared uint occupiedTreeSize;
 
-uniform vec3 simulationBounds; //This needs to be centered around 0, so when passing in at CPU level a transformation is needed
+uniform vec3 simulationBounds = vec3(1.0, 1.0, 1.0);
 
-vec3 origin = -simulationBounds / 2.0;
-vec3 quadBounds = -origin; //(simulationBounds / 2)
+vec3 origin;
+vec3 quadBounds;
 
 
 uint quad(vec3 pos, bool update) {
@@ -122,6 +122,8 @@ void iter(uint treeIndex, uint positionIndex) {
 void main() {
 
 	int position_index = int(gl_LocalInvocationIndex);
+	origin = -simulationBounds / 2.0;
+	quadBounds = -origin; //(simulationBounds / 2)
 
 	if(tree[0] == 0) {
 		tree[0] = 1;

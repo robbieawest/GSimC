@@ -110,6 +110,42 @@ static unsigned int CompileShader(unsigned int type, const std::string& source) 
 	return id;
 }
 
+static void linkProgram(GLuint program) {
+	GLCall(glLinkProgram(program));
+
+	GLint linkSuccess;
+	GLCall(glGetProgramiv(program, GL_LINK_STATUS, &linkSuccess));
+	if (linkSuccess == GL_FALSE) {
+
+		GLint logLength;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+
+		std::vector<char> infoLog(logLength);
+		glGetProgramInfoLog(program, logLength, nullptr, infoLog.data());
+
+		std::cout << __FILE__ << " " << __LINE__ << " " << "Compute Shader linking error";
+		std::cout << infoLog.data() << std::endl;
+	}
+}
+
+static void validateProgram(GLuint program) {
+	GLCall(glValidateProgram(program));
+
+	GLint validateSuccess;
+	GLCall(glGetProgramiv(program, GL_VALIDATE_STATUS, &validateSuccess));
+	if (validateSuccess == GL_FALSE) {
+
+		GLint logLength;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+
+		std::vector<char> infoLog(logLength);
+		glGetProgramInfoLog(program, logLength, nullptr, infoLog.data());
+
+		std::cout << __FILE__ << " " << __LINE__ << " " << "Compute Shader validation error";
+		std::cout << infoLog.data() << std::endl;
+	}
+}
+
 static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader) {
 
 	GLCall(unsigned int program = glCreateProgram());
@@ -118,8 +154,9 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
 
 	GLCall(glAttachShader(program, vs));
 	GLCall(glAttachShader(program, fs));
-	GLCall(glLinkProgram(program));
-	GLCall(glValidateProgram(program));
+
+	linkProgram(program);
+	validateProgram(program);
 
 	GLCall(glDeleteShader(vs));
 	GLCall(glDeleteShader(fs));
@@ -132,8 +169,9 @@ static unsigned int CreateShader(const std::string& path) {
 	unsigned int cs = CompileShader(GL_COMPUTE_SHADER, path);
 
 	GLCall(glAttachShader(program, cs));
-	GLCall(glLinkProgram(program));
-	GLCall(glValidateProgram(program));
+
+	linkProgram(program);
+	validateProgram(program);
 
 	GLCall(glDeleteShader(cs));
 
@@ -149,6 +187,7 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
 }
 
 Shader::Shader(const std::string& computePath) {
+
 	std::string computeSource = ParseShader(computePath);
 
 	m_Renderer_id = CreateShader(computeSource);

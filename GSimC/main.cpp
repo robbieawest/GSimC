@@ -142,7 +142,7 @@ int main() {
 	Shader s_TreeCreation("TreeCreation.glsl");
 
 	//Set bounds
-	s_TreeCreation.setUniformV3f("simulationBounds", SIMULATION_WIDTH, SIMULATION_HEIGHT, SIMULATION_DEPTH);
+	s_TreeCreation.setUniformV3f("simulationBounds", float(SIMULATION_WIDTH), float(SIMULATION_HEIGHT), float(SIMULATION_DEPTH));
 	
 
 	int tree[numTreeNodes];

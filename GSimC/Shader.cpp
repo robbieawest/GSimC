@@ -123,8 +123,14 @@ static void linkProgram(GLuint program) {
 		std::vector<char> infoLog(logLength);
 		glGetProgramInfoLog(program, logLength, nullptr, infoLog.data());
 
-		std::cout << __FILE__ << " " << __LINE__ << " " << "Compute Shader linking error";
-		std::cout << infoLog.data() << std::endl;
+		std::cout << __FILE__ << " " << __LINE__ << " " << "Compute Shader linking error" << std::endl;
+
+		if (infoLog.data() == nullptr) {
+			std::cout << "No log data could be retrieved" << std::endl;
+		}
+		else {
+			std::cout << infoLog.data() << std::endl;
+		}
 	}
 }
 
@@ -141,8 +147,14 @@ static void validateProgram(GLuint program) {
 		std::vector<char> infoLog(logLength);
 		glGetProgramInfoLog(program, logLength, nullptr, infoLog.data());
 
-		std::cout << __FILE__ << " " << __LINE__ << " " << "Compute Shader validation error";
-		std::cout << infoLog.data() << std::endl;
+		std::cout << __FILE__ << " " << __LINE__ << " " << "Compute Shader validation error" << std::endl;
+
+		if (infoLog.data() == nullptr) {
+			std::cout << "No log data could be retrieved" << std::endl;
+		}
+		else {
+			std::cout << infoLog.data() << std::endl;
+		}
 	}
 }
 

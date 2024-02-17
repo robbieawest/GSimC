@@ -66,58 +66,69 @@ uint quad(vec3 pos, bool update) {
 	return -int(xGreater) + 2 + int(yGreater) + 4 * int(zGreater);
 }
 
-void iter(uint treeIndex, uint positionIndex) {
-    int treeEntry = tree[treeIndex];
 
-	if(treeEntry == 0) {
-		//Node is empty, place here
-		tree[treeIndex] = -(int(positionIndex) + 1);
+void addNode(uint treeIndex, uint positionIndex) {
 
-		//Update center of mass
-		center_masses[treeIndex] = positions[positionIndex];
-		center_masses_n[treeIndex] = 1;
-	}
-	else if(treeEntry > 0) {
-		//Node is internal, points to another node
+	uint i = treeIndex;
+	bool keepIterating = true;
 
-		//Update center of mass
-		uint n = center_masses_n[treeIndex];
-		center_masses[treeIndex] = (center_masses[treeIndex] / n) * (n / (n + 1)) + positions[positionIndex] / (n + 1);
-		center_masses_n[treeIndex]++;
+	while(keepIterating) {
 
-		//Recurse
-		uint ind = quad(positions[positionIndex], true);
-		iter(treeEntry + ind, positionIndex); //Recurse
-	}
-	else {
-		//Node is external, is a leaf
-
-		//Split node
-		tree[treeIndex] = int(occupiedTreeSize);
-		atomicAdd(occupiedTreeSize, 8); //Increment occupiedTreeSize as we are adding 8 more nodes
-
-		//Move down the previous node
-		uint convertedPositionInd = -treeEntry - 1;
-		uint prevInd = quad(positions[convertedPositionInd], false); //Converting treeEntry to the index for positions[] (treeEntry is -(ind + 1)) ind = -(treeEntry + 1))
-		uint movedTotalInd = occupiedTreeSize + prevInd;
+		keepIterating = false;
+		int treeEntry = tree[i];
 		
-		tree[movedTotalInd] = treeEntry; //Set the previous node to its new position
-		
-		//Initialize center of mass for new node
-		center_masses[movedTotalInd] = positions[convertedPositionInd];
-		center_masses_n[movedTotalInd] = 1;
+		if(treeEntry == 0) {
+			//Node is empty, place here
+			tree[i] = -(int(positionIndex) + 1);
 
-		//Update center of mass
-		uint n = center_masses_n[treeIndex];
-		center_masses[treeIndex] = (center_masses[treeIndex] / n) * (n / (n + 1)) + positions[positionIndex] / (n + 1);
-		center_masses_n[treeIndex]++;
+			//Update center of mass
+			center_masses[i] = positions[positionIndex];
+			center_masses_n[i] = 1;
+		}
+		else if(treeEntry > 0) {
+			//Node is internal, points to another node
 
-		//Iterate again
-		uint ind = quad(positions[positionIndex], true);
-		iter(occupiedTreeSize + ind, positionIndex);
+			//Update center of mass
+			uint n = center_masses_n[treeIndex];
+			center_masses[i] = (center_masses[i] / n) * (n / (n + 1)) + positions[positionIndex] / (n + 1);
+			center_masses_n[i]++;
+
+			//Iterate again
+			uint ind = quad(positions[positionIndex], true);
+			i = treeEntry + ind;
+			keepIterating = true;
+		}
+		else {
+			//Node is external, is a leaf
+
+			//Split node
+			tree[i] = int(occupiedTreeSize);
+			atomicAdd(occupiedTreeSize, 8); //Increment occupiedTreeSize as we are adding 8 more nodes
+
+			//Move down the previous node
+			uint convertedPositionInd = -treeEntry - 1;
+			uint prevInd = quad(positions[convertedPositionInd], false); //Converting treeEntry to the index for positions[] (treeEntry is -(ind + 1)) ind = -(treeEntry + 1))
+			uint movedTotalInd = occupiedTreeSize + prevInd;
+			
+			tree[movedTotalInd] = treeEntry; //Set the previous node to its new position
+			
+			//Initialize center of mass for new node
+			center_masses[movedTotalInd] = positions[convertedPositionInd];
+			center_masses_n[movedTotalInd] = 1;
+
+			//Update center of mass
+			uint n = center_masses_n[i];
+			center_masses[i] = (center_masses[i] / n) * (n / (n + 1)) + positions[positionIndex] / (n + 1);
+			center_masses_n[i]++;
+
+			//Iterate again
+			uint ind = quad(positions[positionIndex], true);
+			i = occupiedTreeSize + ind;
+			keepIterating = true;
+		}
 	}
+	
 }
-
 
 void main() {
 
@@ -130,7 +141,7 @@ void main() {
 		occupiedTreeSize = 1;
 	}
 
-	iter(0, position_index);
+	addNode(0, position_index);
 }
 
 

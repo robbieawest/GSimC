@@ -140,6 +140,7 @@ int main() {
 	
 	//Compute shaders
 	Shader s_TreeCreation("TreeCreation.glsl");
+	s_TreeCreation.Attach();
 
 	//Set bounds
 	s_TreeCreation.setUniformV3f("simulationBounds", float(SIMULATION_WIDTH), float(SIMULATION_HEIGHT), float(SIMULATION_DEPTH));

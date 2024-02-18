@@ -28,6 +28,10 @@ void SSBO::Unbind() {
 }
 
 void* SSBO::retrieve() {
-	GLCall(void* data = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, binding_index, buffer_size, GL_MAP_READ_BIT));
+	
+	Bind();
+	void* data = malloc(buffer_size);
+	GLCall(glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, buffer_size, data));
+
 	return data;
 }

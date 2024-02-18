@@ -131,17 +131,19 @@ void addNode(uint treeIndex, uint positionIndex) {
 }
 
 void main() {
-
+	
 	int position_index = int(gl_LocalInvocationIndex);
 	origin = -simulationBounds / 2.0;
 	quadBounds = -origin; //(simulationBounds / 2)
 
+	
 	if(tree[0] == 0) {
 		tree[0] = 1;
 		occupiedTreeSize = 1;
 	}
 
 	addNode(0, position_index);
+	
 }
 
 

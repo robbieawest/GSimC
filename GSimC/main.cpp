@@ -143,10 +143,10 @@ int main() {
 	s_TreeCreation.Attach();
 
 	//Set bounds
-	s_TreeCreation.setUniformV3f("simulationBounds", float(SIMULATION_WIDTH), float(SIMULATION_HEIGHT), float(SIMULATION_DEPTH));
+	//s_TreeCreation.setUniformV3f("simulationBounds", float(SIMULATION_WIDTH), float(SIMULATION_HEIGHT), float(SIMULATION_DEPTH));
 	
 
-	int tree[numTreeNodes];
+	int tree[numTreeNodes] = { 0 };
 
 	glm::vec3 positions[numParticles]{
 		glm::vec3(150.0f, 100.0f, -50.0f),
@@ -155,8 +155,9 @@ int main() {
 		glm::vec3(-20.0f, 400.0f, -50.0f)
 	};
 
-	glm::vec3 centerOfMasses[numTreeNodes];
-	unsigned int centerOfMassesN[numTreeNodes];
+	glm::vec3 centerOfMasses[numTreeNodes] = { glm::vec3(0) };
+	unsigned int centerOfMassesN[numTreeNodes] = { 0 };
+
 
 	SSBO treeBuffer(tree, numTreeNodes * sizeof(int), 0, GL_DYNAMIC_COPY);
 	SSBO positionsBuffer(positions, numParticles * sizeof(glm::vec3), 1, GL_STATIC_DRAW);
@@ -164,7 +165,7 @@ int main() {
 	SSBO centerOfMassesNBuffer(centerOfMassesN, numTreeNodes * sizeof(unsigned int), 3, GL_DYNAMIC_COPY);
 
 	GLCall(glDispatchCompute(numParticles, 1, 1));
-	GLCall(glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT));
+	GLCall(glMemoryBarrier(GL_ALL_BARRIER_BITS));
 
 	int* returnedTree = (int*) treeBuffer.retrieve();
 	for (int i = 0; i < numTreeNodes; i++) {

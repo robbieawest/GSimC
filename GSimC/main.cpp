@@ -134,8 +134,14 @@ int main() {
 
 	//Particles setup
 	const int numParticles = 4;
-	const int numTreeNodes = numParticles * 8;
-	//positions arr here
+	const int numTreeNodes = numParticles * 8 + 1;
+
+	glm::vec3 positions[numParticles]{
+		glm::vec3(1.0f, -1.0f, 1.0f),
+		glm::vec3(-1.0f, -1.0f, -1.0f),
+		glm::vec3(1.0, 1.0f, 1.0f),
+		glm::vec3(-1.0f, 1.0f, 1.0f)
+	};
 
 	
 	//Compute shaders
@@ -147,14 +153,6 @@ int main() {
 	
 
 	int tree[numTreeNodes] = { 0 };
-
-	glm::vec3 positions[numParticles]{
-		glm::vec3(150.0f, 100.0f, -50.0f),
-		glm::vec3(400.0f, 300.0f, 100.0f),
-		glm::vec3(300.0f, -10.0f, -25.0f),
-		glm::vec3(-20.0f, 400.0f, -50.0f)
-	};
-
 	glm::vec3 centerOfMasses[numTreeNodes] = { glm::vec3(0) };
 	unsigned int centerOfMassesN[numTreeNodes] = { 0 };
 

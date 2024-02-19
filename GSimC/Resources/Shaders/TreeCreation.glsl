@@ -22,11 +22,30 @@ shared uint occupiedTreeSize;
 
 uniform vec3 simulationBounds = vec3(1.0, 1.0, 1.0);
 
-vec3 origin;
-vec3 quadBounds;
+
+bool[3] getGreaters(vec3 pos, vec3 origin, vec3 quadBounds) {
+	bool xGreater = pos.x > (quadBounds.x + origin.x);
+	bool yGreater = pos.y > (quadBounds.y + origin.y);
+	bool zGreater = pos.z > (quadBounds.z + origin.z);
+
+	return bool[3](xGreater, yGreater, zGreater);
+}
+
+vec3[2] updateQuad(vec3 origin, vec3 quadBounds, bool[3] greaters) {
+
+	vec3 updatedBounds = quadBounds / 2.0;
+
+	vec3 updatedOrigin = vec3(
+			origin.x * float(greaters[0]),
+			origin.y * float(greaters[1]),
+			origin.z * float(greaters[2])
+		) + origin;
+
+	return vec3[2](updatedOrigin, updatedBounds);
+}
 
 
-uint quad(vec3 pos, bool update) {
+uint quad(bool[3] greaters) {
 
 	//Updates based on quads on a cube(8 quads) based on the indexes:
 	//0 = bottom left back (-x -y -z) (SWN) (South West Nadir) (origin quad)
@@ -40,18 +59,6 @@ uint quad(vec3 pos, bool update) {
 
 	//These indexes then index further from the pointer of the internal/root node in the linear quadtree array structure
 
-	bool xGreater = pos.x > (quadBounds.x + origin.x);
-	bool yGreater = pos.y > (quadBounds.y + origin.y);
-	bool zGreater = pos.z > (quadBounds.z + origin.z);
-		
-
-	if(update) {
-		//Update globals
-		quadBounds /= 2.0;
-		origin.x += quadBounds.x * int(xGreater);
-		origin.y += quadBounds.y * int(yGreater);
-		origin.z += quadBounds.z * int(zGreater);
-	}
 
 
 	//Return the index
@@ -59,6 +66,9 @@ uint quad(vec3 pos, bool update) {
 	//Got this result from solving for a, b, k in ax + kba + bx = i
 	//The 0 case does not work with the result as a = -1, k = -2, b = 1 since kba = 2 therefore the result is hardcoded.
 	//The case for z is just the original values but incremented by four so it is easy
+	bool xGreater = greaters[0];
+	bool yGreater = greaters[1];
+	bool zGreater = greaters[2];
 
 	if(!(xGreater || yGreater || zGreater)) return 0;
 
@@ -67,9 +77,19 @@ uint quad(vec3 pos, bool update) {
 }
 
 
-void addNode(uint treeIndex, uint positionIndex) {
+void main() {
+	
+	int positionIndex = int(gl_LocalInvocationIndex);
+	vec3 origin = -simulationBounds / 2.0;
+	vec3 quadBounds = simulationBounds / 2.0;
 
-	uint i = treeIndex;
+	
+	if(tree[0] == 0) {
+		tree[0] = 1;
+		occupiedTreeSize = 1;
+	}
+
+	uint i = 0;
 	bool keepIterating = true;
 
 	while(keepIterating) {
@@ -87,14 +107,22 @@ void addNode(uint treeIndex, uint positionIndex) {
 		}
 		else if(treeEntry > 0) {
 			//Node is internal, points to another node
-
+			
 			//Update center of mass
-			uint n = center_masses_n[treeIndex];
+			uint n = center_masses_n[i];
 			center_masses[i] = (center_masses[i] / n) * (n / (n + 1)) + positions[positionIndex] / (n + 1);
 			center_masses_n[i]++;
 
+			//Break down quad and get index
+			bool[3] greaters = getGreaters(positions[positionIndex], origin, quadBounds);
+			uint ind = quad(greaters);
+
+			//Update quad
+			vec3[2] updatedQuad = updateQuad(origin, quadBounds, greaters);
+			origin = updatedQuad[0];
+			quadBounds = updatedQuad[1];
+
 			//Iterate again
-			uint ind = quad(positions[positionIndex], true);
 			i = treeEntry + ind;
 			keepIterating = true;
 		}
@@ -107,7 +135,11 @@ void addNode(uint treeIndex, uint positionIndex) {
 
 			//Move down the previous node
 			uint convertedPositionInd = -treeEntry - 1;
-			uint prevInd = quad(positions[convertedPositionInd], false); //Converting treeEntry to the index for positions[] (treeEntry is -(ind + 1)) ind = -(treeEntry + 1))
+
+			//Break down quad and get index
+			bool[3] greaters = getGreaters(positions[convertedPositionInd], origin, quadBounds);
+			uint prevInd = quad(greaters);
+
 			uint movedTotalInd = occupiedTreeSize + prevInd;
 			
 			tree[movedTotalInd] = treeEntry; //Set the previous node to its new position
@@ -122,27 +154,19 @@ void addNode(uint treeIndex, uint positionIndex) {
 			center_masses_n[i]++;
 
 			//Iterate again
-			uint ind = quad(positions[positionIndex], true);
+			//Break down quad and get index
+			greaters = getGreaters(positions[positionIndex], origin, quadBounds);
+			uint ind = quad(greaters);
+
+			//Update quad
+			vec3[2] updatedQuad = updateQuad(origin, quadBounds, greaters);
+			origin = updatedQuad[0];
+			quadBounds = updatedQuad[1];
+
 			i = occupiedTreeSize + ind;
 			keepIterating = true;
 		}
 	}
-	
-}
-
-void main() {
-	
-	int position_index = int(gl_LocalInvocationIndex);
-	origin = -simulationBounds / 2.0;
-	quadBounds = -origin; //(simulationBounds / 2)
-
-	
-	if(tree[0] == 0) {
-		tree[0] = 1;
-		occupiedTreeSize = 1;
-	}
-
-	addNode(0, position_index);
 	
 }
 

@@ -1,5 +1,5 @@
 # GSimC
 Gravity Simulation in OpenGL
 
-The insane number of insertions is because of the glm, glew and glfw header files.
-
+If I remember correctly this is multithreaded with quadtrees
+I had attempted to implement compute shaders for 3D octree generation and simulation, but it didn't get finished
